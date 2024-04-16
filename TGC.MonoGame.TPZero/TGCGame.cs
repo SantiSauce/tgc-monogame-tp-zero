@@ -71,8 +71,7 @@ namespace TGC.MonoGame.TP
 
 
 
-        private const float massCar = 20f;
-        private const float velocity = 4000f;
+        private const float velocity = 100f;
         private const float rotationVelocity = 1f;
 
         protected override void Update(GameTime gameTime)
@@ -92,12 +91,12 @@ namespace TGC.MonoGame.TP
 
             if (keyboardState.IsKeyDown(Keys.W))
             {
-                carVelocity += velocity;
+                carVelocity = velocity;
 
             }
             else if (keyboardState.IsKeyDown(Keys.S))
             {
-                carVelocity -= velocity;
+                carVelocity = -velocity;
 
             }
 
@@ -128,9 +127,8 @@ namespace TGC.MonoGame.TP
                 carPosition.Y = JUMP;
                 _onGround = false;
             }
-            Vector3 acceleration = CarWorld.Forward * carVelocity / massCar;
 
-            carPosition += acceleration * time;
+            carPosition += CarWorld.Forward * carVelocity * time;
 
             CarWorld *= Matrix.CreateTranslation(carPosition * time);
 
