@@ -26,7 +26,6 @@ namespace TGC.MonoGame.TP
         private Matrix CarWorld { get; set; }
         private FollowCamera FollowCamera { get; set; }
 
-   
 
 
         public TGCGame()
@@ -61,79 +60,86 @@ namespace TGC.MonoGame.TP
             base.LoadContent();
         }
 
-        private const float wheelForce = 4000f;
-        private const float carMass = 20f;
+    
 
         private const float GRAVITY = 5000f;
         private const float JUMP = 1500f;
         private bool _onGround = true;
 
-        private Vector3 carVelocity = Vector3.Zero;
+        private Vector3 carPosition = Vector3.Zero;
+        private Vector3 carRotation = Vector3.Zero;
 
-        float leftRotationAngle = MathHelper.ToRadians(30f);
-        float rightRotationAngle = -MathHelper.ToRadians(30f);
+
+
+        private const float massCar = 20f;
+        private const float velocity = 4000f;
+        private const float rotationVelocity = 1f;
 
         protected override void Update(GameTime gameTime)
         {
-            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            float totalForce = 0;
-
             var keyboardState = Keyboard.GetState();
+            var time = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+
+            float carVelocity = 0f;
+
+            float rotationAngle = 0f;
+
 
             if (keyboardState.IsKeyDown(Keys.Escape))
             {
                 Exit();
             }
 
-            if (keyboardState.IsKeyDown(Keys.A))
-            {
-                CarWorld = Matrix.CreateFromAxisAngle(CarWorld.Up, leftRotationAngle * dt) * CarWorld;
-            }
-
-            if (keyboardState.IsKeyDown(Keys.D))
-            {
-                CarWorld = Matrix.CreateFromAxisAngle(CarWorld.Up, rightRotationAngle * dt) * CarWorld;
-            }
-
             if (keyboardState.IsKeyDown(Keys.W))
             {
-                totalForce = wheelForce;
+                carVelocity += velocity;
+
+            }
+            else if (keyboardState.IsKeyDown(Keys.S))
+            {
+                carVelocity -= velocity;
+
             }
 
-            if (keyboardState.IsKeyDown(Keys.S))
+            if (keyboardState.IsKeyDown(Keys.A))
             {
-                totalForce = -wheelForce;
+                rotationAngle += rotationVelocity * time;
             }
+            else if (keyboardState.IsKeyDown(Keys.D))
+            {
+                rotationAngle -= rotationVelocity * time;
+            }
+
+            CarWorld = Matrix.CreateFromAxisAngle(CarWorld.Up, rotationAngle) * CarWorld;
 
             if (!_onGround)
             {
-                carVelocity.Y += -GRAVITY * dt;
+                carPosition.Y += -GRAVITY * time;
             }
 
             if (CarWorld.Translation.Y <= 0)
             {
                 _onGround = true;
-                carVelocity.Y = 0;
+                carPosition.Y = 0;
             }
 
             if (keyboardState.IsKeyDown(Keys.Space) && _onGround)
             {
-                carVelocity.Y = JUMP;
+                carPosition.Y = JUMP;
                 _onGround = false;
             }
+            Vector3 acceleration = CarWorld.Forward * carVelocity / massCar;
 
-            Vector3 forwardDirection = CarWorld.Forward;
-            Vector3 forwardAcceleration = forwardDirection * totalForce / carMass;
+            carPosition += acceleration * time;
 
-            carVelocity += (forwardAcceleration * dt);
-
-            Matrix translationMatrix = Matrix.CreateTranslation(carVelocity * dt);
-            CarWorld *= translationMatrix;
+            CarWorld *= Matrix.CreateTranslation(carPosition * time);
 
             FollowCamera.Update(gameTime, CarWorld);
 
             base.Update(gameTime);
         }
+
+
 
 
         protected override void Draw(GameTime gameTime)
